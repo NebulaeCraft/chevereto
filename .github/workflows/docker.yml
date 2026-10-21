@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - "*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to rebuild (e.g. 4.5.7)"
+        required: true
+        type: string
 
 env:
   GHCR_SLUG: ghcr.io/${{ github.repository }}
@@ -24,10 +30,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ inputs.tag && format('refs/tags/{0}', inputs.tag) || github.ref }}
       - name: Get current branch
         id: get-branch
         run: |
-          raw=$(git branch -r --contains ${{ github.ref }})
+          raw=$(git branch -r --contains HEAD)
           echo "branch=${raw##*/}" >> $GITHUB_OUTPUT
       - run: echo ${{ steps.get-branch.outputs.branch }}
       - name: Setup PHP
@@ -47,9 +54,9 @@ jobs:
             ${{ env.GHCR_SLUG }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
+            type=semver,pattern={{version}},value=${{ inputs.tag || github.ref_name }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ inputs.tag || github.ref_name }}
+            type=semver,pattern={{major}},value=${{ inputs.tag || github.ref_name }}
           labels: |
             org.opencontainers.image.title=Chevereto V4
             org.opencontainers.image.description=Ultimate image and video sharing software
@@ -107,6 +114,7 @@ jobs:
           context: ../docker
           platforms: linux/amd64,linux/arm64
           push: true
+          pull: true
           provenance: false
           cache-from: |
             type=gha,scope=chevereto-docker-${{ matrix.php }}
