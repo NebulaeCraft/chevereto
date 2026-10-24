@@ -23,7 +23,7 @@ $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
 $urlPath = parse_url($requestUri, PHP_URL_PATH);
 if (str_ends_with($scriptName, 'index.php')) {
     $relative_root = sanitize_path_slashes(
-        dirname($scriptName)
+        str_replace('\\', '/', dirname($scriptName))
         . '/'
     );
     $urlPath = preg_replace('#' . $relative_root . '#', '/', $requestUri, 1);

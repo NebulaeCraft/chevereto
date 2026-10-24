@@ -1144,7 +1144,7 @@ function preload(): void
 {
     setlocale(LC_ALL, 'en_US.UTF8');
     define('APP_NAME', 'Chevereto');
-    define('PATH_PUBLIC', dirname(__DIR__, 3) . '/');
+    define('PATH_PUBLIC', str_replace('\\', '/', dirname(__DIR__, 3)) . '/');
     define('PATH_APP_CACHE', PATH_PUBLIC . 'app/.cache/');
     define('PATH_APP_LEGACY', PATH_PUBLIC . 'app/legacy/');
     define('PATH_APP_LEGACY_LOAD', PATH_APP_LEGACY . 'load/');
@@ -1442,7 +1442,7 @@ function loaderHandler(
         $script_name = $_server['SCRIPT_NAME'] ?? '';
         if (str_ends_with($script_name, 'index.php')) {
             $relative_root = sanitize_path_slashes(
-                dirname($script_name)
+                str_replace('\\', '/', dirname($script_name))
                 . '/'
             );
             $envVar['CHEVERETO_HOSTNAME_PATH'] = $relative_root;

@@ -2337,7 +2337,16 @@ if ($installed_version !== '' && empty($paramsCheck)) {
             }
             foreach ($changes as $table => $columns) {
                 if ($table === 'query' || str_starts_with($table, 'query.')) {
-                    if (version_compare($version, $installed_version, '>')) {
+                    // Tables created in this run already have the latest schema
+                    $isAlteringCreatedTables = preg_match_all(
+                        '#ALTER TABLE `%table_prefix%(\w+)`#',
+                        (string) $columns,
+                        $alterTables
+                    ) > 0
+                        && array_diff($alterTables[1], $required_sql_files) === [];
+                    if (version_compare($version, $installed_version, '>')
+                        && ! $isAlteringCreatedTables
+                    ) {
                         $sql_update[] = (string) $columns;
                     }
 

@@ -18,6 +18,9 @@ final class HostConfig
         private string $hostname = 'localhost',
         private bool $isHttps = false,
     ) {
+        $path = trim(str_replace('\\', '/', $this->hostnamePath), '/');
+        $path = preg_replace('#/+#', '/', $path);
+        $this->hostnamePath = $path === '' ? '/' : '/' . $path . '/';
     }
 
     public function hostnamePath(): string
