@@ -62,26 +62,45 @@ trait BinaryTrait
         }
 
         if (strpbrk($binary, '/\\') !== false) {
-            if ($this->allowedDirs !== []) {
-                $dirname = $this->trailingSlash(dirname($binary));
-                if (in_array($dirname, $this->allowedDirs) && is_file($binary)) {
-                    return $binary;
+            $dirname = $this->trailingSlash(dirname($binary));
+            if ($this->allowedDirs === [] || in_array($dirname, $this->allowedDirs)) {
+                foreach ($this->candidates($binary) as $candidate) {
+                    if (is_file($candidate)) {
+                        return $candidate;
+                    }
                 }
-            } elseif (is_file($binary)) {
-                return $binary;
             }
 
             throw new RuntimeException("{$this->name()} binary not found at specified path", 2);
         }
 
         foreach ($this->pathDirs as $dir) {
-            $candidate = $dir . $binary;
-            if (is_file($candidate)) {
-                return $candidate;
+            foreach ($this->candidates($dir . $binary) as $candidate) {
+                if (is_file($candidate)) {
+                    return $candidate;
+                }
             }
         }
 
         throw new RuntimeException("{$this->name()} binary not found at PATH", 2);
+    }
+
+    /**
+     * On Windows, binaries are looked up with the PATHEXT extensions (exiftool -> exiftool.exe).
+     */
+    private function candidates(string $file): array
+    {
+        if (PHP_OS_FAMILY !== 'Windows' || pathinfo($file, PATHINFO_EXTENSION) !== '') {
+            return [$file];
+        }
+        $pathExt = getenv('PATHEXT') ?: '.COM;.EXE;.BAT;.CMD';
+        $candidates = [];
+        foreach (array_filter(explode(';', $pathExt)) as $ext) {
+            $candidates[] = $file . strtolower($ext);
+        }
+        $candidates[] = $file;
+
+        return $candidates;
     }
 
     private function trailingSlashArray(array &$dirs): void
